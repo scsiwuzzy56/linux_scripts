@@ -1,0 +1,31 @@
+echo off
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" >nul 2>&1
+IF NOT %ERRORLEVEL% == 0 goto Not_Pending_Restart
+
+Call :YesNoBox "IT Department has requested you reboot your computer to complete updates. Would you like to reboot now?"
+if "%YesNo%"=="7" (
+echo "they said no"
+exit /b
+)
+
+if "%YesNo%"=="6" (
+shutdown /r /f /t 150 /c "Your Computer will reboot in 2 minutes, please save all work now."
+exit /b
+)
+
+:Not_Pending_Restart
+echo System Reboot Pending: No
+for /f %%i in ('wmic qfe list ^| find "KB" /c') do echo Number of Installed Updates: %%i
+exit /b
+
+:YesNoBox
+REM returns 6 = Yes, 7 = No. Type=4 = Yes/No
+set YesNo=
+set MsgType=4
+set heading=%~2
+set message=%~1
+echo wscript.echo msgbox(WScript.Arguments(0),%MsgType%,WScript.Arguments(1)) >"%temp%\input.vbs"
+for /f "tokens=* delims=" %%a in ('cscript //nologo "%temp%\input.vbs" "%message%" "%heading%"') do set YesNo=%%a
+exit /b
+
+:EOF
